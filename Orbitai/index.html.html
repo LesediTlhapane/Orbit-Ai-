@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrbitAI — Project Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* dark mode (default) */
+    --bg:#0a0f0d;--bg2:#101810;--bg3:#161f17;--bg4:#1c2820;
+    --border:#243028;--border2:#2e3d32;
+    --text:#e2ede6;--text2:#7fa98a;--text3:#4a6e54;
+    --accent:#2dd87a;--accent2:#21b863;--accent-bg:#0b2716;
+    --accent-muted:rgba(45,216,122,.12);--accent-border:rgba(45,216,122,.25);
+    --purple:#a78bfa;--purple-bg:#1e1535;
+    --green:#34d399;--green-bg:#0d2b20;
+    --amber:#fbbf24;--amber-bg:#2b1f05;
+    --red:#f87171;--red-bg:#2b0f0f;
+    --coral:#fb7c6b;--teal:#2dd4bf;
+    /* keep --blue as alias for accent so existing logic still works */
+    --blue:var(--accent);--blue2:var(--accent2);--blue-bg:var(--accent-bg);
+    --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+    --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  }
+  /* ── LIGHT MODE ── */
+  :root.light{
+    --bg:#f4f7f5;--bg2:#ffffff;--bg3:#eef3f0;--bg4:#e5ece8;
+    --border:#d0ddd4;--border2:#b8ccbf;
+    --text:#1a2e22;--text2:#3d6b4f;--text3:#7fa98a;
+    --accent:#1a9e55;--accent2:#157a42;--accent-bg:#d8f5e6;
+    --accent-muted:rgba(26,158,85,.1);--accent-border:rgba(26,158,85,.3);
+    --blue:var(--accent);--blue2:var(--accent2);--blue-bg:var(--accent-bg);
+    --purple:#7c63d6;--purple-bg:#ede8ff;
+    --green:#18915a;--green-bg:#d3f5e7;
+    --amber:#c08c00;--amber-bg:#fff3cc;
+    --red:#dc3535;--red-bg:#fdeaea;
+    --coral:#d9492e;--teal:#0e8f85;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;overflow:hidden}
+  .auth-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:1.5rem}
+  .auth-logo{font-size:36px;font-weight:600;letter-spacing:-1px;text-align:center}
+  .auth-logo span{color:var(--accent)}
+  .auth-tagline{font-size:13px;color:var(--text3);margin-top:-1rem}
+  .auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);padding:2rem;width:400px}
+  .auth-tabs{display:flex;background:var(--bg3);border-radius:var(--radius);padding:3px;margin-bottom:1.5rem}
+  .auth-tab{flex:1;padding:8px;text-align:center;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all .2s}
+  .auth-tab.active{background:var(--bg4);color:var(--text)}
+  .auth-form{display:flex;flex-direction:column;gap:1rem}
+  .fg{display:flex;flex-direction:column;gap:6px}
+  .fg label{font-size:11px;color:var(--text2);font-weight:600;letter-spacing:.5px}
+  .fg input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s}
+  .fg input:focus{border-color:var(--blue)}
+  .fg input::placeholder{color:var(--text3)}
+  .btn-primary{background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:11px;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-primary:hover{background:var(--blue2)}
+  .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+  .auth-error{font-size:12px;color:var(--red);background:var(--red-bg);border:1px solid rgba(248,113,113,.2);border-radius:var(--radius);padding:8px 12px;display:none}
+  .auth-error.show{display:block}
+  .auth-divider{text-align:center;font-size:11px;color:var(--text3);margin:4px 0}
+  .btn-google{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;font-family:var(--font);font-size:13px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color .2s}
+  .btn-google:hover{border-color:var(--border2)}
+  .google-icon{width:16px;height:16px}
+  .app{display:flex;height:100vh;overflow:hidden}
+  .sidebar{width:225px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+  .main-area{flex:1;overflow:hidden;display:flex;flex-direction:column}
+  .sidebar-header{padding:1rem;border-bottom:1px solid var(--border)}
+  .logo{font-size:18px;font-weight:600;letter-spacing:-.3px}.logo span{color:var(--accent)}
+  .user-chip{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg3);border-radius:var(--radius);margin-top:10px;cursor:pointer;transition:background .15s}
+  .user-chip:hover{background:var(--bg4)}
+  .av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+  .user-name{font-size:12px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sidebar-nav{padding:.5rem;flex:1;overflow-y:auto}
+  .nav-sec{margin-bottom:1rem}
+  .nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;padding:6px 8px 4px;text-transform:uppercase}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s}
+  .nav-item:hover{background:var(--bg3);color:var(--text)}
+  .nav-item.active{background:var(--blue-bg);color:var(--blue)}
+  .nav-item .ti{font-size:16px;flex-shrink:0}
+  .nav-badge{margin-left:auto;background:var(--red-bg);color:var(--red);font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px}
+  .pdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .pname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+  .topbar{padding:0 1.5rem;height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-shrink:0;background:var(--bg2)}
+  .topbar-title{font-size:15px;font-weight:600;flex:1}
+  .topbar-actions{display:flex;align-items:center;gap:8px}
+  .btn-sm{padding:6px 12px;border-radius:var(--radius);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;border:none}
+  .btn-outline{background:none;border:1px solid var(--border2);color:var(--text2)}
+  .btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+  .btn-filled{background:var(--blue);border:1px solid var(--blue);color:#fff}
+  .btn-filled:hover{background:var(--blue2)}
+  .view{flex:1;overflow:hidden;display:none;flex-direction:column}
+  .view.active{display:flex}
+  .view-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;flex-shrink:0}
+  .view-tab{padding:12px 14px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px;transition:all .15s}
+  .view-tab:hover{color:var(--text2)}
+  .view-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+  .tab-content{display:none;flex:1;overflow:hidden;flex-direction:column}
+  .tab-content.active{display:flex}
+  .dashboard-content{padding:1.5rem;overflow-y:auto;flex:1}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+  .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
+  .stat-num{font-size:28px;font-weight:600;margin-bottom:2px;font-variant-numeric:tabular-nums}
+  .stat-label{font-size:12px;color:var(--text3)}
+  .stat-change{font-size:11px;color:var(--green);margin-top:4px}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+  .dash-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
+  .dash-title{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1rem}
+  .progress-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;margin:6px 0}
+  .progress-fill{height:100%;border-radius:3px;transition:width .6s ease}
+  .empty-state{text-align:center;padding:2rem;color:var(--text3);font-size:13px}
+  .empty-state .ti{font-size:32px;display:block;margin-bottom:.5rem;opacity:.4}
+  .board-filters{display:flex;gap:8px;padding:.75rem 1.5rem;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+  .filter-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s}
+  .filter-chip:hover,.filter-chip.active{border-color:var(--blue);color:var(--blue)}
+  .board-wrapper{padding:1rem 1.5rem;overflow-x:auto;flex:1}
+  .board{display:flex;gap:1rem;padding-bottom:1rem;min-width:max-content;height:100%}
+  .column{width:280px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);display:flex;flex-direction:column;max-height:calc(100vh - 210px)}
+  .col-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .col-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .col-title{font-size:12px;font-weight:600;color:var(--text2);flex:1}
+  .col-count{font-size:11px;color:var(--text3);background:var(--bg3);padding:2px 7px;border-radius:10px}
+  .col-cards{padding:8px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px}
+  .add-card{padding:8px;margin:0 8px 8px;text-align:center;font-size:12px;color:var(--text3);cursor:pointer;border-radius:var(--radius);border:1px dashed var(--border);transition:all .15s;flex-shrink:0}
+  .add-card:hover{border-color:var(--blue);color:var(--blue)}
+  .task-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;cursor:pointer;transition:all .15s}
+  .task-card:hover{border-color:var(--border2);background:var(--bg4)}
+  .tc-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+  .tc-id{font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0;padding-top:1px}
+  .tc-title{font-size:13px;font-weight:500;flex:1;line-height:1.4}
+  .tc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .pbadge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.3px}
+  .p-critical{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.3)}
+  .p-high{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25)}
+  .p-medium{background:var(--accent-muted);color:var(--accent);border:1px solid var(--accent-border)}
+  .p-low{background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)}
+  .tbadge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}
+  .t-bug{background:rgba(248,113,113,.1);color:#f87171}
+  .t-story{background:rgba(167,139,250,.1);color:#a78bfa}
+  .t-task{background:var(--accent-muted);color:var(--accent)}
+  .t-course{background:rgba(45,212,191,.1);color:#2dd4bf}
+  .t-automation{background:rgba(251,124,107,.1);color:#fb7c6b}
+  .av-xs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0}
+  .phase-strip{display:flex;height:4px;border-radius:2px;overflow:hidden;margin-top:8px;gap:1px}
+  .phase-seg{flex:1;border-radius:2px}
+  .list-view-wrap{padding:1rem 1.5rem;overflow-y:auto;flex:1}
+  .list-table{width:100%;border-collapse:collapse}
+  .list-table th{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:1}
+  .list-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+  .list-table tr:hover td{background:var(--bg2);cursor:pointer}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:flex-start;justify-content:flex-end;padding:1rem}
+  .task-detail{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);width:640px;max-height:calc(100vh - 2rem);overflow-y:auto}
+  .detail-hdr{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+  .detail-title-area{flex:1}
+  .detail-id{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px}
+  .detail-title{font-size:16px;font-weight:600;line-height:1.4}
+  .close-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;border-radius:var(--radius);font-size:18px;display:flex;transition:color .15s}
+  .close-btn:hover{color:var(--text)}
+  .detail-body{padding:1.25rem 1.5rem;display:flex;gap:1.5rem}
+  .detail-main{flex:1;min-width:0}
+  .detail-side{width:185px;flex-shrink:0}
+  .dsec{margin-bottom:1.5rem}
+  .dsec-title{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .detail-desc{font-size:13px;color:var(--text2);line-height:1.7;background:var(--bg3);border-radius:var(--radius);padding:10px;border:1px solid var(--border)}
+  .phase-tracker{display:flex;flex-direction:column;gap:5px}
+  .phase-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius);cursor:pointer;transition:all .15s;border:1px solid transparent}
+  .phase-item.current{background:var(--blue-bg);border-color:rgba(79,142,247,.3)}
+  .phase-item.done-ph{background:var(--bg3)}
+  .phase-item.upcoming{background:var(--bg3);opacity:.5}
+  .phase-dot-lg{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .phase-label{font-size:12px;font-weight:500;flex:1}
+  .meta-field{margin-bottom:12px}
+  .meta-label{font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:600;letter-spacing:.3px}
+  .meta-sel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-family:var(--font);font-size:12px;width:100%;outline:none;cursor:pointer}
+  .meta-sel:focus{border-color:var(--blue)}
+  .comment-list{display:flex;flex-direction:column;gap:10px;margin-bottom:1rem}
+  .comment{display:flex;gap:10px}
+  .comment-body{flex:1;background:var(--bg3);border-radius:var(--radius);padding:10px;border:1px solid var(--border)}
+  .ai-cb{border-left:2px solid var(--purple);background:var(--purple-bg)}
+  .ai-lbl{font-size:10px;color:var(--purple);font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+  .cmeta{font-size:11px;color:var(--text3);margin-bottom:4px;display:flex;gap:8px}
+  .cauthor{color:var(--text2);font-weight:500}
+  .ctext{font-size:12px;color:var(--text2);line-height:1.6}
+  .cinput{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:9px;color:var(--text);font-family:var(--font);font-size:12px;resize:none;outline:none;line-height:1.6;width:100%}
+  .cinput:focus{border-color:var(--blue)}
+  .cactions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+  .ai-panel{position:fixed;right:0;top:0;bottom:0;width:370px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:400;transform:translateX(100%);transition:transform .25s ease}
+  .ai-panel.open{transform:translateX(0)}
+  .aiphdr{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .aiptitle{font-size:14px;font-weight:600;flex:1}
+  .aidot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .aimsgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:10px}
+  .aimsg{border-radius:var(--radius-lg);padding:10px 12px;font-size:12px;line-height:1.6}
+  .aimsg.assistant{background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+  .aimsg.user{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--text);align-self:flex-end;max-width:85%}
+  .ai-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .ai-chip{background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s}
+  .ai-chip:hover{border-color:var(--accent);color:var(--accent)}
+  .aiinput-area{padding:1rem;border-top:1px solid var(--border)}
+  .aiinput-row{display:flex;gap:8px}
+  .aiinput{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;resize:none}
+  .aiinput:focus{border-color:var(--accent)}
+  .btn-ai{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:8px 12px;color:var(--accent);font-size:16px;cursor:pointer;transition:all .15s;display:flex;align-items:center}
+  .btn-ai:hover{background:var(--accent-muted)}
+  .typing{display:flex;gap:4px;align-items:center;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);align-self:flex-start}
+  .typing span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:bounce 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}
+  .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+  .notif-panel{position:fixed;right:1rem;top:56px;width:320px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);z-index:600;display:none;max-height:400px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+  .notif-panel.open{display:block}
+  .notif-hdr{padding:1rem;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .notif-clear{font-size:11px;color:var(--blue);cursor:pointer;font-weight:400}
+  .notif-item{padding:10px 1rem;border-bottom:1px solid var(--border);display:flex;gap:10px;cursor:pointer;transition:background .15s}
+  .notif-item:hover{background:var(--bg3)}
+  .notif-item.unread{background:var(--blue-bg)}
+  .notif-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:5px}
+  .notif-text{font-size:12px;color:var(--text2);line-height:1.5}
+  .notif-time{font-size:10px;color:var(--text3);margin-top:2px}
+  .modal-sm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:flex;align-items:center;justify-content:center}
+  .modal-sm{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);padding:1.5rem;width:480px;max-height:90vh;overflow-y:auto}
+  .modal-sm-title{font-size:16px;font-weight:600;margin-bottom:1.25rem}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .field-full{grid-column:span 2}
+  .flabel{font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:600;letter-spacing:.3px;display:block}
+  .finput{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:var(--font);font-size:13px;width:100%;outline:none}
+  .finput:focus{border-color:var(--blue)}
+  .fselect{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:var(--font);font-size:13px;width:100%;outline:none;cursor:pointer}
+  .ftextarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:var(--font);font-size:13px;width:100%;outline:none;resize:none;line-height:1.5;min-height:70px}
+  .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem}
+  .btn-cancel{background:none;border:1px solid var(--border2);border-radius:var(--radius);padding:8px 16px;color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer}
+  .btn-submit{background:var(--blue);border:none;border-radius:var(--radius);padding:8px 16px;color:#fff;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer}
+  .btn-submit:hover{background:var(--blue2)}
+  .colour-hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5}
+  .settings-panel{padding:1.5rem;overflow-y:auto;flex:1;max-width:640px}
+  .settings-sec-title{font-size:14px;font-weight:600;margin-bottom:1rem;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+  .settings-label{font-size:13px;font-weight:500}
+  .settings-desc{font-size:11px;color:var(--text3);margin-top:2px}
+  .toggle{width:40px;height:22px;background:var(--border2);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+  .toggle.on{background:var(--blue)}
+  .toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:9px;top:2px;left:2px;transition:left .2s}
+  .toggle.on::after{left:20px}
+  .member-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .role-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+  .role-admin{background:var(--accent-muted);color:var(--accent)}
+  .role-member{background:var(--bg4);color:var(--text3)}
+
+  /* ── ROADMAP ── */
+  .roadmap-wrapper{padding:1.5rem;overflow:auto;flex:1}
+  .rm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+  .rm-title{font-size:13px;font-weight:600;color:var(--text2)}
+  .rm-controls{display:flex;align-items:center;gap:8px}
+  .rm-year-nav{display:flex;align-items:center;gap:4px}
+  .rm-year-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;color:var(--text2);font-family:var(--font);font-size:12px;cursor:pointer;transition:all .15s}
+  .rm-year-btn:hover{border-color:var(--blue);color:var(--blue)}
+  .rm-year-label{font-size:13px;font-weight:600;color:var(--text);min-width:40px;text-align:center}
+  .rm-grid{display:grid;grid-template-columns:180px 1fr;gap:0}
+  .rm-months-row{display:grid;grid-template-columns:repeat(12,1fr);margin-bottom:4px;padding-left:0}
+  .rm-month-cell{font-size:10px;color:var(--text3);font-weight:500;text-align:center;padding:4px 2px;border-left:1px solid var(--border);position:relative}
+  .rm-month-cell.today-month{color:var(--blue);font-weight:600}
+  .rm-row{display:contents}
+  .rm-label{font-size:12px;color:var(--text2);padding:6px 12px 6px 0;display:flex;align-items:center;gap:6px;height:40px}
+  .rm-label-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .rm-label-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rm-track{position:relative;height:40px;background:var(--bg3);border-bottom:1px solid var(--border)}
+  .rm-track:first-of-type{border-top:1px solid var(--border)}
+  .rm-bar{position:absolute;height:26px;top:7px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:grab;user-select:none;transition:box-shadow .15s;min-width:30px}
+  .rm-bar:hover{box-shadow:0 2px 12px rgba(0,0,0,.4)}
+  .rm-bar.dragging{cursor:grabbing;opacity:.85;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:10}
+  .rm-resize-handle{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:col-resize;border-radius:0 6px 6px 0}
+  .rm-resize-handle:hover{background:rgba(255,255,255,.2)}
+  .rm-today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--blue);opacity:.6;pointer-events:none;z-index:5}
+  .rm-month-grid-lines{position:absolute;top:0;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(12,1fr);pointer-events:none}
+  .rm-month-grid-line{border-left:1px solid var(--border);height:100%}
+  .rm-edit-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);padding:4px 8px;color:var(--text3);font-family:var(--font);font-size:11px;cursor:pointer;transition:all .15s}
+  .rm-edit-btn:hover{border-color:var(--blue);color:var(--blue)}
+  .rm-add-row{display:flex;align-items:center;gap:8px;padding:8px 0;margin-top:8px;font-size:12px;color:var(--text3);cursor:pointer;transition:color .15s}
+  .rm-add-row:hover{color:var(--blue)}
+  .sprint-hdr{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px}
+  .sprint-title{font-size:13px;font-weight:600;flex:1}
+  .sprint-prog-bar{width:80px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+  .sprint-prog-fill{height:100%;background:var(--green);border-radius:2px}
+  .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:2000;flex-direction:column;gap:1rem}
+  .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:10px 16px;font-size:13px;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.4);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1}
+  .toast-icon{color:var(--green);font-size:16px}
+  .toast.error .toast-icon{color:var(--red)}
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--text3)">Loading OrbitAI…</div>
+</div>
+
+<div class="auth-screen hidden" id="authScreen">
+  <div class="auth-logo">Orbit<span>AI</span></div>
+  <div class="auth-tagline">AI-Powered Project Intelligence</div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</div>
+      <div class="auth-tab" onclick="switchAuthTab('register',this)">Create Account</div>
+    </div>
+    <div id="loginForm" class="auth-form">
+      <div class="fg"><label>EMAIL</label><input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="fg"><label>PASSWORD</label><input type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="btn-primary" id="loginBtn" onclick="doLogin()"><i class="ti ti-login"></i> Sign In</button>
+      <div class="auth-divider">— or —</div>
+      <button class="btn-google" id="googleLoginBtn" onclick="doGoogle()">
+        <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+    <div id="registerForm" class="auth-form hidden">
+      <div class="fg"><label>FULL NAME</label><input type="text" id="regName" placeholder="Your full name" autocomplete="name"></div>
+      <div class="fg"><label>EMAIL</label><input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="fg"><label>PASSWORD</label><input type="password" id="regPwd" placeholder="At least 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"></div>
+      <div class="auth-error" id="registerError"></div>
+      <button class="btn-primary" id="registerBtn" onclick="doRegister()"><i class="ti ti-user-plus"></i> Create Account</button>
+      <div class="auth-divider">— or —</div>
+      <button class="btn-google" onclick="doGoogle()">
+        <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check toast-icon" id="toastIcon"></i><span id="toastMsg">Done</span></div>
+
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-hdr">Notifications<span class="notif-clear" onclick="clearNotifs()">Mark all read</span></div>
+  <div id="notifList"></div>
+</div>
+
+<!-- NEW PROJECT MODAL -->
+<div class="modal-sm-overlay hidden" id="newProjectModal">
+  <div class="modal-sm">
+    <div class="modal-sm-title">Create New Project</div>
+    <div class="form-grid">
+      <div class="field-full"><label class="flabel">PROJECT NAME</label><input class="finput" id="npName" placeholder="e.g. Financial Literacy Course"></div>
+      <div><label class="flabel">TYPE</label><select class="fselect" id="npType"><option>AI Automation</option><option>Course Design</option><option>Research</option><option>Development</option><option>Consulting</option></select></div>
+      <div>
+        <label class="flabel">COLOUR</label>
+        <select class="fselect" id="npColor">
+          <option value="#4f8ef7">Blue — General / Default</option>
+          <option value="#a78bfa">Purple — Research &amp; Strategy</option>
+          <option value="#34d399">Green — Courses &amp; Learning</option>
+          <option value="#fbbf24">Amber — AI Automation</option>
+          <option value="#fb7c6b">Coral — Consulting &amp; Client Work</option>
+          <option value="#2dd4bf">Teal — Development &amp; Tech</option>
+        </select>
+        <div class="colour-hint">Appears as the sidebar dot and dashboard progress bar colour.</div>
+      </div>
+      <div class="field-full"><label class="flabel">DESCRIPTION</label><textarea class="ftextarea" id="npDesc" placeholder="Brief description of this project..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="hideModal('newProjectModal')">Cancel</button>
+      <button class="btn-submit" onclick="createProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW TASK MODAL -->
+<div class="modal-sm-overlay hidden" id="newTaskModal">
+  <div class="modal-sm">
+    <div class="modal-sm-title">Add Ticket</div>
+    <div class="form-grid">
+      <div class="field-full"><label class="flabel">TITLE</label><input class="finput" id="ntTitle" placeholder="What needs to be done?"></div>
+      <div><label class="flabel">TYPE</label><select class="fselect" id="ntType"><option>Task</option><option>Story</option><option>Bug</option><option>Course</option><option>Automation</option></select></div>
+      <div><label class="flabel">PRIORITY</label><select class="fselect" id="ntPriority"><option>Medium</option><option>Low</option><option>High</option><option>Critical</option></select></div>
+      <div><label class="flabel">PHASE</label><select class="fselect" id="ntPhase"><option>Backlog</option><option>Planning</option><option>In Progress</option><option>Review</option><option>Done</option></select></div>
+      <div><label class="flabel">PROJECT</label><select class="fselect" id="ntProject"></select></div>
+      <div class="field-full"><label class="flabel">DESCRIPTION</label><textarea class="ftextarea" id="ntDesc" placeholder="Describe this ticket..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="hideModal('newTaskModal')">Cancel</button>
+      <button class="btn-submit" onclick="createTask()">Add Ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK DETAIL PANEL -->
+<div class="modal-overlay hidden" id="taskDetailOverlay" onclick="closeDetailIfBg(event)">
+  <div class="task-detail" id="taskDetail"></div>
+</div>
+
+<!-- AI PANEL -->
+<div class="ai-panel" id="aiPanel">
+  <div class="aiphdr">
+    <div class="aidot"></div>
+    <div class="aiptitle">Orbit AI Assistant</div>
+    <button class="close-btn" onclick="toggleAI()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="aimsgs" id="aiMessages"></div>
+  <div class="aiinput-area">
+    <div class="aiinput-row">
+      <textarea class="aiinput" id="aiInput" rows="2" placeholder="Ask AI about your project…" onkeydown="aiKeyDown(event)"></textarea>
+      <button class="btn-ai" onclick="sendAI()"><i class="ti ti-send"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app hidden" id="mainApp">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">Orbit<span>AI</span></div>
+      <div class="user-chip" onclick="navigateTo('settings')">
+        <div class="av" id="sidebarAv" style="background:var(--accent-bg);color:var(--accent)">?</div>
+        <div class="user-name" id="sidebarName">Loading…</div>
+        <i class="ti ti-settings" style="font-size:13px;color:var(--text3)"></i>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-sec">
+        <div class="nav-item active" onclick="navigateTo('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+        <div class="nav-item" onclick="navigateTo('inbox',this)"><i class="ti ti-inbox"></i>My Tasks<span class="nav-badge" id="myTasksBadge" style="display:none">0</span></div>
+        <div class="nav-item" onclick="navigateTo('roadmap',this)"><i class="ti ti-road"></i>Roadmap</div>
+      </div>
+      <div class="nav-sec">
+        <div class="nav-label">Projects</div>
+        <div id="projectNavList"></div>
+        <div class="nav-item" onclick="showModal('newProjectModal')" style="color:var(--text3);font-size:12px"><i class="ti ti-plus"></i>New Project</div>
+      </div>
+      <div class="nav-sec">
+        <div class="nav-label">Workspace</div>
+        <div class="nav-item" onclick="navigateTo('members',this)"><i class="ti ti-users"></i>Members</div>
+        <div class="nav-item" onclick="navigateTo('settings',this)"><i class="ti ti-settings"></i>Settings</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn-sm btn-outline" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark mode"><i class="ti ti-sun" id="themeIcon"></i></button>
+        <button class="btn-sm btn-outline" onclick="toggleAI()"><i class="ti ti-robot"></i> AI Assistant</button>
+        <button class="btn-sm btn-filled" onclick="openAddTicket()"><i class="ti ti-plus"></i> Add Ticket</button>
+        <button class="btn-sm btn-outline" style="position:relative" onclick="toggleNotif()">
+          <i class="ti ti-bell"></i>
+          <span id="notifBadge" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--red);border-radius:50%;font-size:9px;color:#fff;display:none;align-items:center;justify-content:center;font-weight:700">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="dashboardView">
+      <div class="dashboard-content">
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-num" id="s-total">0</div><div class="stat-label">Total Tickets</div></div>
+          <div class="stat-box"><div class="stat-num" id="s-done">0</div><div class="stat-label">Completed</div><div class="stat-change">↑ All time</div></div>
+          <div class="stat-box"><div class="stat-num" id="s-prog">0</div><div class="stat-label">In Progress</div></div>
+          <div class="stat-box"><div class="stat-num" id="s-proj">0</div><div class="stat-label">Projects</div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-title">Projects</div><div id="dashProjects"><div class="empty-state"><i class="ti ti-folder"></i>No projects yet</div></div></div>
+          <div class="dash-card"><div class="dash-title">Recent Activity</div><div id="dashActivity" style="display:flex;flex-direction:column;gap:8px"><div class="empty-state"><i class="ti ti-activity"></i>Activity will appear here</div></div></div>
+        </div>
+        <div class="dash-card"><div class="dash-title">My Open Tickets</div><div id="dashMyTasks"><div class="empty-state"><i class="ti ti-ticket"></i>No open tickets assigned to you</div></div></div>
+      </div>
+    </div>
+
+    <!-- PROJECT VIEW -->
+    <div class="view" id="projectView">
+      <div class="view-tabs" id="projectViewTabs">
+        <div class="view-tab active" onclick="switchTab('board',this)"><i class="ti ti-layout-kanban"></i>Board</div>
+        <div class="view-tab" onclick="switchTab('list',this)"><i class="ti ti-list"></i>Backlog</div>
+        <div class="view-tab" onclick="switchTab('sprints',this)"><i class="ti ti-bolt"></i>Sprints</div>
+      </div>
+      <div class="tab-content active" id="boardTab">
+        <div class="board-filters" id="boardFilters">
+          <div class="filter-chip active" onclick="filterTasks('all',this)"><i class="ti ti-layout-grid"></i>All</div>
+          <div class="filter-chip" onclick="filterTasks('Critical',this)"><i class="ti ti-flame"></i>Critical</div>
+          <div class="filter-chip" onclick="filterTasks('mine',this)"><i class="ti ti-user"></i>Mine</div>
+          <div class="filter-chip" onclick="filterTasks('Course',this)"><i class="ti ti-school"></i>Courses</div>
+          <div class="filter-chip" onclick="filterTasks('Automation',this)"><i class="ti ti-robot"></i>Automation</div>
+          <div class="filter-chip" onclick="filterTasks('Bug',this)"><i class="ti ti-bug"></i>Bugs</div>
+        </div>
+        <div class="board-wrapper"><div class="board" id="boardContainer"></div></div>
+      </div>
+      <div class="tab-content" id="listTab">
+        <div class="list-view-wrap">
+          <table class="list-table">
+            <thead><tr><th style="width:80px">ID</th><th>Title</th><th style="width:100px">Type</th><th style="width:90px">Priority</th><th style="width:110px">Phase</th><th style="width:90px">Assignee</th></tr></thead>
+            <tbody id="listBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-content" id="sprintsTab">
+        <div class="list-view-wrap" id="sprintsContent"></div>
+      </div>
+    </div>
+
+    <!-- INBOX -->
+    <div class="view" id="inboxView">
+      <div class="list-view-wrap">
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:1rem">My Assigned Tickets</div>
+        <table class="list-table">
+          <thead><tr><th style="width:80px">ID</th><th>Title</th><th style="width:130px">Project</th><th style="width:90px">Priority</th><th style="width:110px">Phase</th></tr></thead>
+          <tbody id="inboxBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div class="view" id="roadmapView">
+      <div class="roadmap-wrapper" id="roadmapContent"></div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="view" id="membersView">
+      <div class="settings-panel">
+        <div style="margin-bottom:2rem">
+          <div class="settings-sec-title">Workspace Members</div>
+          <div id="membersList"><div class="empty-state"><i class="ti ti-users"></i>Members will appear here</div></div>
+          <div style="margin-top:1rem"><button class="btn-sm btn-filled" onclick="showToast('Share your workspace link to invite team members!')"><i class="ti ti-user-plus"></i> Invite Member</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="settingsView">
+      <div class="settings-panel">
+        <div style="margin-bottom:2rem">
+          <div class="settings-sec-title">Account</div>
+          <div class="settings-row"><div><div class="settings-label" id="settingsName">—</div><div class="settings-desc" id="settingsEmail">—</div></div></div>
+          <div class="settings-row"><div><div class="settings-label">Change Password</div><div class="settings-desc">Send a password reset email</div></div><button class="btn-sm btn-outline" onclick="sendPasswordReset()">Send Email</button></div>
+        </div>
+        <div style="margin-bottom:2rem">
+          <div class="settings-sec-title">Notifications</div>
+          <div class="settings-row"><div><div class="settings-label">Task assignments</div><div class="settings-desc">Notify when assigned</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Comment mentions</div><div class="settings-desc">Notify on @mentions</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Sprint updates</div><div class="settings-desc">Daily sprint summary</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div style="margin-bottom:2rem">
+          <div class="settings-sec-title">AI Features</div>
+          <div class="settings-row"><div><div class="settings-label">AI ticket suggestions</div><div class="settings-desc">Suggestions when creating tickets</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Auto-summarise threads</div><div class="settings-desc">AI summarises long comment threads</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Course outline generator</div><div class="settings-desc">AI drafts course structure from ticket</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div>
+          <button class="btn-sm btn-outline" onclick="doLogout()" style="color:var(--red);border-color:rgba(248,113,113,.3)"><i class="ti ti-logout"></i> Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect,
+  getRedirectResult, updateProfile, sendPasswordResetEmail
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import {
+  getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
+  getDocs, onSnapshot, query, where, orderBy, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDyvdhzpkDRJAmLsja5ESTRO4ied_Nbdu8",
+  authDomain: "orbitai-fbdcd.firebaseapp.com",
+  projectId: "orbitai-fbdcd",
+  storageBucket: "orbitai-fbdcd.firebasestorage.app",
+  messagingSenderId: "751914983821",
+  appId: "1:751914983821:web:a79c7aa311b2576995ddc4"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+// Handle Google redirect return
+getRedirectResult(auth).catch(e => {
+  if (e && e.code !== 'auth/no-current-user') showToast('Google sign-in failed: ' + e.message, true);
+});
+
+// ── CONSTANTS ──
+const PHASES = [
+  {id:'Backlog',color:'#5c6280'},
+  {id:'Planning',color:'#fbbf24'},
+  {id:'In Progress',color:'#4f8ef7'},
+  {id:'Review',color:'#a78bfa'},
+  {id:'Done',color:'#34d399'}
+];
+const PRIORITY_CLASS = {Critical:'p-critical',High:'p-high',Medium:'p-medium',Low:'p-low'};
+const TYPE_CLASS = {Bug:'t-bug',Story:'t-story',Task:'t-task',Course:'t-course',Automation:'t-automation'};
+const COLORS = ['#4f8ef7','#a78bfa','#34d399','#fbbf24','#fb7c6b','#2dd4bf','#f87171'];
+
+// ── STATE ──
+let S = {
+  user: null,
+  projects: [],
+  tasks: [],          // ALL tasks for this user's projects, loaded via getDocs
+  currentProject: null,
+  activeFilter: 'all',
+  unsubscribers: [],
+  notifications: [],
+  members: [],
+  roadmapYear: new Date().getFullYear(),
+  roadmapTimelines: {}  // { projectId: { startMonth, endMonth } } stored locally + Firestore
+};
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth, async (user) => {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  if (user) {
+    S.user = user;
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    const initials = getInitials(user.displayName || user.email);
+    const color = COLORS[Math.abs(hashStr(user.uid)) % COLORS.length];
+    const av = document.getElementById('sidebarAv');
+    av.textContent = initials;
+    av.style.background = color + '22';
+    av.style.color = color;
+    document.getElementById('sidebarName').textContent = user.displayName || user.email.split('@')[0];
+    document.getElementById('settingsName').textContent = user.displayName || 'No display name';
+    document.getElementById('settingsEmail').textContent = user.email;
+    await saveUserProfile(user);
+    startListeners();
+  } else {
+    S.user = null;
+    S.unsubscribers.forEach(u => u());
+    S.unsubscribers = [];
+    S.projects = []; S.tasks = [];
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+  }
+});
+
+async function saveUserProfile(user) {
+  await setDoc(doc(db, 'users', user.uid), {
+    uid: user.uid,
+    name: user.displayName || user.email.split('@')[0],
+    email: user.email,
+    lastSeen: serverTimestamp()
+  }, { merge: true });
+}
+
+// ────────────────────────────────────────────────
+// FIX 1: Tasks query
+// The previous query used where('workspaceMembers','array-contains', uid)
+// which silently returns [] without a Firestore composite index.
+// New approach: query projects the user is a member of (no index needed),
+// then load ALL tasks for those projects client-side using getDocs per project.
+// This is simple, requires zero indexes, and works immediately.
+// ────────────────────────────────────────────────
+function startListeners() {
+  // Projects — simple equality on array field, no index needed
+  const projQ = query(collection(db, 'projects'), where('members', 'array-contains', S.user.uid));
+  const unsubProj = onSnapshot(projQ, async (snap) => {
+    S.projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    await loadRoadmapTimelines();
+    await loadAllTasks();
+    setupTaskListeners(); // FIX: start real-time per-project task listeners
+    renderProjectNav();
+    renderDashboard();
+    renderRoadmap();
+  }, err => {
+    console.error('Projects error:', err);
+    showToast('Error loading projects: ' + err.message, true);
+  });
+  S.unsubscribers.push(unsubProj);
+
+  // Members
+  const unsubMembers = onSnapshot(collection(db, 'users'), snap => {
+    S.members = snap.docs.map(d => d.data());
+    renderMembers();
+  }, err => console.error('Members error:', err));
+  S.unsubscribers.push(unsubMembers);
+
+  // Notifications — simple == query, no index needed
+  const notifQ = query(collection(db, 'notifications'), where('userId', '==', S.user.uid));
+  const unsubNotif = onSnapshot(notifQ, snap => {
+    S.notifications = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderNotifs();
+  }, err => console.error('Notifications error:', err));
+  S.unsubscribers.push(unsubNotif);
+
+  // Also set up a tasks listener per project when projects are known
+  // (handled by loadAllTasks + re-render on change via project snapshot)
+}
+
+// Load tasks for all user's projects using simple projectId queries
+// Each query only needs a single-field index (auto-created by Firestore)
+async function loadAllTasks() {
+  if (!S.projects.length) { S.tasks = []; refreshTaskViews(); return; }
+  try {
+    const allTasks = [];
+    // Query tasks per project — simple where('projectId','==',pid), no composite index
+    for (const proj of S.projects) {
+      const snap = await getDocs(query(collection(db, 'tasks'), where('projectId', '==', proj.id)));
+      snap.docs.forEach(d => allTasks.push({ id: d.id, ...d.data() }));
+    }
+    S.tasks = allTasks;
+    refreshTaskViews();
+  } catch (e) {
+    console.error('loadAllTasks error:', e);
+    showToast('Error loading tasks: ' + e.message, true);
+  }
+}
+
+// Set up real-time task listeners per project (called after projects load)
+function setupTaskListeners() {
+  // Remove old task unsubs if any
+  S._taskUnsubs = S._taskUnsubs || [];
+  S._taskUnsubs.forEach(u => u());
+  S._taskUnsubs = [];
+
+  for (const proj of S.projects) {
+    const q = query(collection(db, 'tasks'), where('projectId', '==', proj.id));
+    const unsub = onSnapshot(q, snap => {
+      // Merge this project's tasks into S.tasks
+      const newForProj = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      S.tasks = S.tasks.filter(t => t.projectId !== proj.id).concat(newForProj);
+      refreshTaskViews();
+    }, err => console.error('Task listener error for', proj.id, err));
+    S._taskUnsubs.push(unsub);
+  }
+}
+
+function refreshTaskViews() {
+  renderDashboard();
+  renderInbox();
+  if (S.currentProject) { renderBoard(); renderList(); renderSprints(); }
+}
+
+// ── AUTH ACTIONS ──
+window.switchAuthTab = (tab, el) => {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+};
+
+window.doLogin = async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd = document.getElementById('loginPwd').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  if (!email || !pwd) { showAuthError(errEl,'Please enter your email and password.'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Signing in…';
+  try {
+    await signInWithEmailAndPassword(auth, email, pwd);
+    errEl.classList.remove('show');
+  } catch (e) {
+    showAuthError(errEl, friendlyAuthError(e.code));
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-login"></i> Sign In';
+  }
+};
+
+window.doRegister = async () => {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pwd = document.getElementById('regPwd').value;
+  const errEl = document.getElementById('registerError');
+  const btn = document.getElementById('registerBtn');
+  if (!name||!email||!pwd) { showAuthError(errEl,'Please fill in all fields.'); return; }
+  if (pwd.length<6) { showAuthError(errEl,'Password must be at least 6 characters.'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Creating account…';
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+    await updateProfile(cred.user, { displayName: name });
+    errEl.classList.remove('show');
+  } catch (e) {
+    showAuthError(errEl, friendlyAuthError(e.code));
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-user-plus"></i> Create Account';
+  }
+};
+
+window.doGoogle = async () => {
+  const btn = document.getElementById('googleLoginBtn');
+  if (btn) { btn.disabled=true; btn.textContent='Redirecting to Google…'; }
+  try {
+    await signInWithRedirect(auth, googleProvider);
+  } catch (e) {
+    showToast('Could not start Google sign-in: ' + e.message, true);
+    if (btn) { btn.disabled=false; btn.textContent='Continue with Google'; }
+  }
+};
+
+window.doLogout = async () => { await signOut(auth); };
+
+window.sendPasswordReset = async () => {
+  try {
+    await sendPasswordResetEmail(auth, S.user.email);
+    showToast('Password reset email sent!');
+  } catch (e) { showToast('Error: ' + e.message, true); }
+};
+
+function showAuthError(el, msg) { el.textContent = msg; el.classList.add('show'); }
+function friendlyAuthError(code) {
+  const map = {
+    'auth/user-not-found':'No account found with this email.',
+    'auth/wrong-password':'Incorrect password.',
+    'auth/invalid-credential':'Incorrect email or password.',
+    'auth/email-already-in-use':'An account with this email already exists.',
+    'auth/invalid-email':'Please enter a valid email address.',
+    'auth/too-many-requests':'Too many attempts. Please try again later.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+  };
+  return map[code] || 'Something went wrong. Please try again.';
+}
+
+// ── PROJECTS ──
+window.createProject = async () => {
+  const name = document.getElementById('npName').value.trim();
+  if (!name) { showToast('Please enter a project name.', true); return; }
+  try {
+    await addDoc(collection(db, 'projects'), {
+      name,
+      type: document.getElementById('npType').value,
+      color: document.getElementById('npColor').value,
+      desc: document.getElementById('npDesc').value,
+      createdBy: S.user.uid,
+      members: [S.user.uid],
+      createdAt: serverTimestamp()
+    });
+    hideModal('newProjectModal');
+    document.getElementById('npName').value = '';
+    document.getElementById('npDesc').value = '';
+    showToast('Project created!');
+    addNotification('New project created: ' + name);
+  } catch (e) { showToast('Error: ' + e.message, true); }
+};
+
+function renderProjectNav() {
+  document.getElementById('projectNavList').innerHTML = S.projects.map(p =>
+    `<div class="nav-item" onclick="openProject('${p.id}',this)">
+      <div class="pdot" style="background:${p.color}"></div>
+      <span class="pname">${p.name}</span>
+    </div>`
+  ).join('');
+}
+
+window.openProject = (pid, navEl) => {
+  S.currentProject = pid;
+  const proj = S.projects.find(p => p.id === pid);
+  document.getElementById('topbarTitle').textContent = proj?.name || 'Project';
+  showView('projectView');
+  // Reset to board tab — scoped to project view only
+  document.querySelectorAll('#projectViewTabs .view-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('#projectView .tab-content').forEach((t,i) => t.classList.toggle('active', i===0));
+  if (navEl) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+  S.activeFilter = 'all';
+  document.querySelectorAll('#boardFilters .filter-chip').forEach((c,i) => c.classList.toggle('active', i===0));
+  renderBoard(); renderList(); renderSprints();
+};
+
+// ── TASKS ──
+window.openAddTicket = () => {
+  const sel = document.getElementById('ntProject');
+  sel.innerHTML = S.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('') || '<option value="">No projects yet</option>';
+  if (S.currentProject) sel.value = S.currentProject;
+  showModal('newTaskModal');
+};
+
+window.createTask = async () => {
+  const title = document.getElementById('ntTitle').value.trim();
+  if (!title) { showToast('Please enter a ticket title.', true); return; }
+  const pid = document.getElementById('ntProject').value;
+  if (!pid) { showToast('Create a project first!', true); return; }
+  const proj = S.projects.find(p => p.id === pid);
+  try {
+    const ref = await addDoc(collection(db, 'tasks'), {
+      title,
+      type: document.getElementById('ntType').value,
+      priority: document.getElementById('ntPriority').value,
+      phase: document.getElementById('ntPhase').value,
+      desc: document.getElementById('ntDesc').value,
+      projectId: pid,
+      projectName: proj?.name || '',
+      assigneeId: S.user.uid,
+      assigneeName: S.user.displayName || S.user.email,
+      createdBy: S.user.uid,
+      commentCount: 0,
+      createdAt: serverTimestamp()
+    });
+    // Immediately add to local state so board updates without waiting for a re-fetch
+    S.tasks.push({
+      id: ref.id,
+      title,
+      type: document.getElementById('ntType').value,
+      priority: document.getElementById('ntPriority').value,
+      phase: document.getElementById('ntPhase').value,
+      desc: document.getElementById('ntDesc').value,
+      projectId: pid,
+      projectName: proj?.name || '',
+      assigneeId: S.user.uid,
+      assigneeName: S.user.displayName || S.user.email,
+      createdBy: S.user.uid,
+      commentCount: 0,
+    });
+    hideModal('newTaskModal');
+    document.getElementById('ntTitle').value = '';
+    document.getElementById('ntDesc').value = '';
+    refreshTaskViews();
+    showToast('Ticket created!');
+    addNotification('New ticket: ' + title);
+  } catch (e) { showToast('Error: ' + e.message, true); }
+};
+
+// ── BOARD ──
+function renderBoard() {
+  const tasks = getFilteredTasks();
+  document.getElementById('boardContainer').innerHTML = PHASES.map(ph => {
+    const pt = tasks.filter(t => t.phase === ph.id);
+    return `<div class="column">
+      <div class="col-header">
+        <div class="col-dot" style="background:${ph.color}"></div>
+        <div class="col-title">${ph.id}</div>
+        <div class="col-count">${pt.length}</div>
+      </div>
+      <div class="col-cards" ondrop="dropTask(event,'${ph.id}')" ondragover="allowDrop(event)">
+        ${pt.map(t => renderCard(t)).join('') || '<div style="padding:8px;font-size:11px;color:var(--text3);text-align:center;opacity:.6">Drop tickets here</div>'}
+      </div>
+      <div class="add-card" onclick="quickAdd('${ph.id}')">+ Add ticket</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCard(t) {
+  const cc = t.commentCount || 0;
+  const initials = getInitials(t.assigneeName || '?');
+  return `<div class="task-card" draggable="true" ondragstart="dragTask(event,'${t.id}')" onclick="openTaskDetail('${t.id}')">
+    <div class="tc-top">
+      <span class="tc-id">${t.id.slice(-6).toUpperCase()}</span>
+      <span class="tc-title">${t.title}</span>
+    </div>
+    <div class="tc-meta">
+      <span class="pbadge ${PRIORITY_CLASS[t.priority]||'p-medium'}">${t.priority}</span>
+      <span class="tbadge ${TYPE_CLASS[t.type]||'t-task'}">${t.type}</span>
+      ${cc ? `<span style="font-size:10px;color:var(--text3);display:flex;align-items:center;gap:3px"><i class="ti ti-message" style="font-size:11px"></i>${cc}</span>` : ''}
+      <div style="margin-left:auto"><div class="av-xs" style="background:var(--blue-bg);color:var(--blue)">${initials}</div></div>
+    </div>
+    <div class="phase-strip">
+      ${PHASES.map(ph => `<div class="phase-seg" style="background:${t.phase===ph.id?ph.color:'var(--bg4)'}"></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function getFilteredTasks() {
+  let tasks = S.tasks.filter(t => t.projectId === S.currentProject);
+  if (S.activeFilter === 'mine') tasks = tasks.filter(t => t.assigneeId === S.user?.uid);
+  else if (S.activeFilter !== 'all') tasks = tasks.filter(t => t.priority === S.activeFilter || t.type === S.activeFilter);
+  return tasks;
+}
+
+let draggedTask = null;
+window.dragTask = (e, tid) => { draggedTask = tid; e.dataTransfer.effectAllowed = 'move'; };
+window.allowDrop = e => e.preventDefault();
+window.dropTask = async (e, phase) => {
+  e.preventDefault();
+  if (!draggedTask) return;
+  try {
+    await updateDoc(doc(db, 'tasks', draggedTask), { phase });
+    const t = S.tasks.find(t => t.id === draggedTask);
+    if (t) t.phase = phase;
+    renderBoard();
+    showToast('Moved to ' + phase);
+  } catch (err) { showToast('Error updating task', true); }
+  draggedTask = null;
+};
+
+// FIX 2: filterTasks and switchTab now always re-render correctly
+// because renderBoard/renderList/renderSprints use S.tasks which is always populated
+window.filterTasks = (f, el) => {
+  document.querySelectorAll('#boardFilters .filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  S.activeFilter = f;
+  renderBoard();
+};
+
+window.switchTab = (tab, el) => {
+  document.querySelectorAll('#projectViewTabs .view-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#projectView .tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById(tab + 'Tab').classList.add('active');
+};
+
+function renderList() {
+  const tasks = S.tasks.filter(t => t.projectId === S.currentProject);
+  document.getElementById('listBody').innerHTML = tasks.length ? tasks.map(t =>
+    `<tr onclick="openTaskDetail('${t.id}')">
+      <td style="font-size:10px;color:var(--text3);font-family:var(--mono)">${t.id.slice(-6).toUpperCase()}</td>
+      <td style="font-size:13px">${t.title}</td>
+      <td><span class="tbadge ${TYPE_CLASS[t.type]||'t-task'}">${t.type}</span></td>
+      <td><span class="pbadge ${PRIORITY_CLASS[t.priority]||'p-medium'}">${t.priority}</span></td>
+      <td><span style="font-size:11px;color:${PHASES.find(p=>p.id===t.phase)?.color||'var(--text3)'}">${t.phase}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${t.assigneeName||'—'}</td>
+    </tr>`
+  ).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">No tickets yet — add one above</td></tr>';
+}
+
+function renderSprints() {
+  const tasks = S.tasks.filter(t => t.projectId === S.currentProject);
+  if (!tasks.length) {
+    document.getElementById('sprintsContent').innerHTML = '<div class="empty-state"><i class="ti ti-bolt"></i>Add tickets to see sprints</div>';
+    return;
+  }
+  const sprints = [
+    { name:'Backlog', tasks: tasks.filter(t => t.phase==='Backlog') },
+    { name:'Current Sprint', tasks: tasks.filter(t => ['Planning','In Progress','Review'].includes(t.phase)), active:true },
+    { name:'Completed', tasks: tasks.filter(t => t.phase==='Done') }
+  ];
+  document.getElementById('sprintsContent').innerHTML = sprints.map(s => {
+    const pct = s.tasks.length ? Math.round(s.tasks.filter(t=>t.phase==='Done').length/s.tasks.length*100) : 0;
+    return `<div style="margin-bottom:1.5rem">
+      <div class="sprint-hdr" style="${s.active?'border-left:2px solid var(--blue)':''}">
+        <div class="sprint-title">${s.name}${s.active?'<span style="font-size:10px;color:var(--blue);font-weight:600;margin-left:6px">ACTIVE</span>':''}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="sprint-prog-bar"><div class="sprint-prog-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:11px;color:var(--text3)">${s.tasks.length} tickets</span>
+        </div>
+      </div>
+      ${s.tasks.map(t => `<div onclick="openTaskDetail('${t.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:4px">
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${t.id.slice(-6).toUpperCase()}</span>
+        <span style="flex:1;font-size:13px">${t.title}</span>
+        <span class="pbadge ${PRIORITY_CLASS[t.priority]||'p-medium'}">${t.priority}</span>
+        <span style="font-size:11px;color:${PHASES.find(p=>p.id===t.phase)?.color||'var(--text3)'}">${t.phase}</span>
+      </div>`).join('')||'<div style="padding:8px 12px;font-size:12px;color:var(--text3)">No tickets</div>'}
+    </div>`;
+  }).join('');
+}
+
+// ── TASK DETAIL ──
+window.openTaskDetail = async (tid) => {
+  const t = S.tasks.find(t => t.id === tid);
+  if (!t) return;
+  const proj = S.projects.find(p => p.id === t.projectId);
+  const commSnap = await getDocs(query(collection(db,'tasks',tid,'comments'), orderBy('createdAt','asc')));
+  const comments = commSnap.docs.map(d => ({id:d.id,...d.data()}));
+  document.getElementById('taskDetail').innerHTML = `
+    <div class="detail-hdr">
+      <div class="detail-title-area">
+        <div class="detail-id">${t.id.slice(-6).toUpperCase()} · ${proj?.name||''}</div>
+        <div class="detail-title">${t.title}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <span class="tbadge ${TYPE_CLASS[t.type]||'t-task'}">${t.type}</span>
+          <span class="pbadge ${PRIORITY_CLASS[t.priority]||'p-medium'}">${t.priority}</span>
+        </div>
+      </div>
+      <button class="close-btn" onclick="document.getElementById('taskDetailOverlay').classList.add('hidden')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-main">
+        <div class="dsec">
+          <div class="dsec-title"><i class="ti ti-file-description" style="font-size:14px"></i>Description</div>
+          <div class="detail-desc">${t.desc||'No description yet.'}</div>
+        </div>
+        <div class="dsec">
+          <div class="dsec-title"><i class="ti ti-layers-subtract" style="font-size:14px"></i>Phase Progress</div>
+          <div class="phase-tracker">${PHASES.map(ph => {
+            const doneIdx = PHASES.findIndex(p=>p.id===t.phase);
+            const thisIdx = PHASES.indexOf(ph);
+            const isDone = thisIdx < doneIdx;
+            const isCurrent = ph.id === t.phase;
+            return `<div class="phase-item ${isCurrent?'current':isDone?'done-ph':'upcoming'}" onclick="updatePhase('${tid}','${ph.id}')">
+              <div class="phase-dot-lg" style="background:${ph.color}"></div>
+              <span class="phase-label">${ph.id}</span>
+              ${isDone?'<i class="ti ti-check" style="color:var(--green);font-size:14px;margin-left:auto"></i>':''}
+              ${isCurrent?'<span style="font-size:10px;color:var(--blue);margin-left:auto;font-weight:600">CURRENT</span>':''}
+            </div>`;
+          }).join('')}</div>
+        </div>
+        <div class="dsec">
+          <div class="dsec-title"><i class="ti ti-messages" style="font-size:14px"></i>Comments <span style="color:var(--text3);font-weight:400">${comments.length}</span></div>
+          <div class="comment-list">${comments.map(c => {
+            const isAI = c.authorId==='ai';
+            const initials = isAI?'AI':getInitials(c.authorName||'?');
+            return `<div class="comment">
+              <div class="av-xs" style="background:${isAI?'var(--purple-bg)':'var(--blue-bg)'};color:${isAI?'var(--purple)':'var(--blue)'};width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">${initials}</div>
+              <div class="comment-body ${isAI?'ai-cb':''}">
+                ${isAI?'<div class="ai-lbl"><i class="ti ti-robot" style="font-size:12px"></i>Orbit AI</div>':''}
+                <div class="cmeta"><span class="cauthor">${isAI?'AI Assistant':c.authorName}</span><span>${formatTime(c.createdAt)}</span></div>
+                <div class="ctext">${c.text}</div>
+              </div>
+            </div>`;
+          }).join('')||'<div style="font-size:12px;color:var(--text3)">No comments yet.</div>'}</div>
+          <textarea class="cinput" id="ci-${tid}" rows="3" placeholder="Add a comment…"></textarea>
+          <div class="cactions">
+            <button class="btn-sm btn-outline" onclick="addAIComment('${tid}','${t.type}')"><i class="ti ti-robot"></i> AI Insight</button>
+            <button class="btn-sm btn-filled" onclick="addComment('${tid}')">Comment</button>
+          </div>
+        </div>
+      </div>
+      <div class="detail-side">
+        <div class="meta-field"><div class="meta-label">PRIORITY</div>
+          <select class="meta-sel" onchange="updateTaskField('${tid}','priority',this.value)">
+            ${['Critical','High','Medium','Low'].map(p=>`<option${t.priority===p?' selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="meta-field"><div class="meta-label">TYPE</div>
+          <select class="meta-sel" onchange="updateTaskField('${tid}','type',this.value)">
+            ${['Task','Story','Bug','Course','Automation'].map(ty=>`<option${t.type===ty?' selected':''}>${ty}</option>`).join('')}
+          </select>
+        </div>
+        <div class="meta-field" style="margin-top:1rem"><div class="meta-label">PROJECT</div><div style="font-size:12px;color:var(--text2)">${proj?.name||'—'}</div></div>
+        <div class="meta-field"><div class="meta-label">ASSIGNED TO</div><div style="font-size:12px;color:var(--text2)">${t.assigneeName||'—'}</div></div>
+        <div class="meta-field"><div class="meta-label">CREATED</div><div style="font-size:12px;color:var(--text2)">${formatTime(t.createdAt)}</div></div>
+        <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:8px">
+          <button class="btn-sm btn-outline" style="justify-content:center" onclick="addAIComment('${tid}','${t.type}')"><i class="ti ti-robot"></i> AI Insight</button>
+          <button class="btn-sm btn-outline" style="justify-content:center;color:var(--red)" onclick="deleteTask('${tid}')"><i class="ti ti-trash"></i> Delete</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('taskDetailOverlay').classList.remove('hidden');
+};
+
+window.closeDetailIfBg = e => {
+  if (e.target.id === 'taskDetailOverlay') document.getElementById('taskDetailOverlay').classList.add('hidden');
+};
+window.updatePhase = async (tid, phase) => {
+  await updateDoc(doc(db,'tasks',tid), { phase });
+  const t = S.tasks.find(t=>t.id===tid); if (t) t.phase = phase;
+  showToast('Phase → ' + phase);
+  openTaskDetail(tid);
+};
+window.updateTaskField = async (tid, field, val) => {
+  await updateDoc(doc(db,'tasks',tid), { [field]: val });
+  const t = S.tasks.find(t=>t.id===tid); if (t) t[field] = val;
+  showToast('Updated');
+};
+window.deleteTask = async (tid) => {
+  if (!confirm('Delete this ticket?')) return;
+  await deleteDoc(doc(db,'tasks',tid));
+  S.tasks = S.tasks.filter(t => t.id !== tid);
+  document.getElementById('taskDetailOverlay').classList.add('hidden');
+  refreshTaskViews();
+  showToast('Ticket deleted');
+};
+window.quickAdd = phase => {
+  document.getElementById('ntPhase').value = phase;
+  openAddTicket();
+};
+
+// ── COMMENTS ──
+window.addComment = async (tid) => {
+  const inp = document.getElementById('ci-' + tid);
+  const text = inp.value.trim();
+  if (!text) return;
+  await addDoc(collection(db,'tasks',tid,'comments'), {
+    text, authorId: S.user.uid,
+    authorName: S.user.displayName || S.user.email,
+    createdAt: serverTimestamp()
+  });
+  const t = S.tasks.find(t=>t.id===tid);
+  const newCount = (t?.commentCount||0)+1;
+  await updateDoc(doc(db,'tasks',tid), { commentCount: newCount });
+  if (t) t.commentCount = newCount;
+  inp.value = '';
+  openTaskDetail(tid);
+  showToast('Comment added');
+};
+
+window.addAIComment = async (tid, type) => {
+  const responses = {
+    Course:[
+      "For course design, I recommend the ADDIE framework: Analyse learning outcomes → Design module structure → Develop content with AI integration → Implement with a pilot cohort → Evaluate and iterate. Each module should include a hands-on AI exercise so learners build practical AI literacy alongside the core subject.",
+      "Suggested assessment: 60% AI-assisted individual projects, 20% reflective journals documenting AI use, 20% peer collaboration. This mirrors authentic professional practice."
+    ],
+    Automation:[
+      "For automation: (1) Document the exact manual process. (2) Identify where AI adds value vs rule-based logic. (3) Build a prototype with real data. (4) Test edge cases thoroughly. (5) Deploy with a human review step initially.",
+      "Consider a webhook pipeline: trigger → data extraction → AI processing → output generation → notification. Keeps the system modular and easy to debug."
+    ],
+    Bug:[
+      "For this bug: (1) Reproduce with minimum input, (2) Log exact inputs causing failure, (3) Check boundary conditions — empty strings, special characters, very long inputs, international formatting."
+    ],
+    default:[
+      "This ticket could unblock 2-3 others in the backlog. Completing it this sprint improves overall velocity. Consider splitting it if it spans more than 3 days.",
+      "Add acceptance criteria to this ticket so the team knows exactly when it's done. A clear definition of done reduces review friction significantly."
+    ]
+  };
+  const pool = responses[type]||responses.default;
+  const text = pool[Math.floor(Math.random()*pool.length)];
+  await addDoc(collection(db,'tasks',tid,'comments'), {
+    text, authorId:'ai', authorName:'Orbit AI', createdAt: serverTimestamp()
+  });
+  const t = S.tasks.find(t=>t.id===tid);
+  const newCount = (t?.commentCount||0)+1;
+  await updateDoc(doc(db,'tasks',tid), { commentCount: newCount });
+  if (t) t.commentCount = newCount;
+  openTaskDetail(tid);
+  showToast('AI insight added');
+};
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  document.getElementById('s-total').textContent = S.tasks.length;
+  document.getElementById('s-done').textContent = S.tasks.filter(t=>t.phase==='Done').length;
+  document.getElementById('s-prog').textContent = S.tasks.filter(t=>t.phase==='In Progress').length;
+  document.getElementById('s-proj').textContent = S.projects.length;
+
+  document.getElementById('dashProjects').innerHTML = S.projects.length ? S.projects.map(p => {
+    const pt = S.tasks.filter(t => t.projectId===p.id);
+    const pct = pt.length ? Math.round(pt.filter(t=>t.phase==='Done').length/pt.length*100) : 0;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${p.color}"></div>
+        <div style="font-size:13px;font-weight:500;flex:1;cursor:pointer" onclick="openProject('${p.id}')">${p.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${pct}%</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${p.color}"></div></div>
+      <div style="font-size:11px;color:var(--text3)">${pt.length} tickets · ${p.type}</div>
+    </div>`;
+  }).join('') : '<div class="empty-state"><i class="ti ti-folder-plus"></i>No projects yet</div>';
+
+  const mine = S.tasks.filter(t => t.assigneeId===S.user?.uid && t.phase!=='Done').slice(0,6);
+  document.getElementById('dashMyTasks').innerHTML = mine.length ? mine.map(t =>
+    `<div onclick="openTaskDetail('${t.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:6px">
+      <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${t.id.slice(-6).toUpperCase()}</span>
+      <span style="flex:1;font-size:13px">${t.title}</span>
+      <span class="tbadge ${TYPE_CLASS[t.type]||'t-task'}">${t.type}</span>
+      <span class="pbadge ${PRIORITY_CLASS[t.priority]||'p-medium'}">${t.priority}</span>
+      <span style="font-size:11px;color:var(--text3)">${t.projectName||''}</span>
+    </div>`
+  ).join('') : '<div class="empty-state"><i class="ti ti-circle-check"></i>All clear — no open tickets!</div>';
+}
+
+// ── ROADMAP (FIX 3: interactive, editable timeline) ──
+// Projects get a start/end month stored in Firestore under projects/{id}
+// The roadmap shows 12 months of the selected year.
+// Bars are draggable (move) and have a resize handle on the right (extend).
+
+function renderRoadmap() {
+  const year = S.roadmapYear;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  const todayMonth = now.getMonth(); // 0-indexed
+  const todayYear = now.getFullYear();
+  const todayFrac = now.getDate() / 31; // rough fraction within month
+
+  const el = document.getElementById('roadmapContent');
+  if (!S.projects.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-road"></i>Create projects to see them on the roadmap</div>';
+    return;
+  }
+
+  // Build HTML
+  let html = `
+    <div class="rm-header">
+      <div class="rm-title">Project Timeline</div>
+      <div class="rm-controls">
+        <div class="rm-year-nav">
+          <button class="rm-year-btn" onclick="roadmapPrevYear()"><i class="ti ti-chevron-left"></i></button>
+          <span class="rm-year-label">${year}</span>
+          <button class="rm-year-btn" onclick="roadmapNextYear()"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:180px 1fr;align-items:start">
+      <div></div>
+      <div class="rm-months-row">
+        ${months.map((m,i) => `<div class="rm-month-cell${year===todayYear&&i===todayMonth?' today-month':''}">${m}</div>`).join('')}
+      </div>
+      ${S.projects.map(p => {
+        const tl = S.roadmapTimelines[p.id] || { startMonth:0, endMonth:3 };
+        const leftPct = (tl.startMonth / 12) * 100;
+        const widthPct = ((tl.endMonth - tl.startMonth + 1) / 12) * 100;
+        const todayPct = year===todayYear ? ((todayMonth + todayFrac) / 12) * 100 : -1;
+        return `
+        <div class="rm-label">
+          <div class="rm-label-dot" style="background:${p.color}"></div>
+          <div class="rm-label-text" title="${p.name}">${p.name}</div>
+        </div>
+        <div class="rm-track" id="track-${p.id}">
+          <div class="rm-month-grid-lines">${months.map(()=>'<div class="rm-month-grid-line"></div>').join('')}</div>
+          ${todayPct>=0?`<div class="rm-today-line" style="left:${todayPct}%"></div>`:''}
+          <div class="rm-bar" id="bar-${p.id}" style="left:${leftPct}%;width:${widthPct}%;background:${p.color}"
+            onmousedown="rmBarDragStart(event,'${p.id}','move')"
+            onclick="openProject('${p.id}')">
+            ${p.name}
+            <div class="rm-resize-handle" onmousedown="rmBarDragStart(event,'${p.id}','resize');event.stopPropagation()"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:1rem;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:1rem">
+      <span><i class="ti ti-drag-drop" style="font-size:13px"></i> Drag bar to move · Drag right edge to resize</span>
+      ${year===todayYear?'<span style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:2px;background:var(--blue);opacity:.6;border-radius:1px"></div> Today</span>':''}
+    </div>`;
+  el.innerHTML = html;
+}
+
+// Load roadmap timelines from Firestore project docs
+async function loadRoadmapTimelines() {
+  for (const p of S.projects) {
+    if (p.roadmapStart !== undefined) {
+      S.roadmapTimelines[p.id] = {
+        startMonth: p.roadmapStart ?? 0,
+        endMonth: p.roadmapEnd ?? 3
+      };
+    } else if (!S.roadmapTimelines[p.id]) {
+      // Default: spread projects across the year
+      const idx = S.projects.indexOf(p);
+      S.roadmapTimelines[p.id] = {
+        startMonth: Math.min(idx * 2, 10),
+        endMonth: Math.min(idx * 2 + 3, 11)
+      };
+    }
+  }
+}
+
+window.roadmapPrevYear = () => { S.roadmapYear--; renderRoadmap(); };
+window.roadmapNextYear = () => { S.roadmapYear++; renderRoadmap(); };
+
+// Drag-to-move and drag-to-resize for roadmap bars
+window.rmBarDragStart = (e, pid, mode) => {
+  e.preventDefault();
+  const track = document.getElementById('track-' + pid);
+  const bar = document.getElementById('bar-' + pid);
+  if (!track||!bar) return;
+  const trackRect = track.getBoundingClientRect();
+  const tl = S.roadmapTimelines[pid] || { startMonth:0, endMonth:3 };
+  const startX = e.clientX;
+  const origStart = tl.startMonth;
+  const origEnd = tl.endMonth;
+
+  const onMove = (ev) => {
+    const dx = ev.clientX - startX;
+    const monthDelta = Math.round((dx / trackRect.width) * 12);
+    if (mode === 'move') {
+      const span = origEnd - origStart;
+      let newStart = Math.max(0, Math.min(11 - span, origStart + monthDelta));
+      let newEnd = newStart + span;
+      S.roadmapTimelines[pid] = { startMonth: newStart, endMonth: newEnd };
+    } else {
+      let newEnd = Math.max(origStart, Math.min(11, origEnd + monthDelta));
+      S.roadmapTimelines[pid] = { startMonth: origStart, endMonth: newEnd };
+    }
+    // Update bar position live
+    const cur = S.roadmapTimelines[pid];
+    const leftPct = (cur.startMonth / 12) * 100;
+    const widthPct = ((cur.endMonth - cur.startMonth + 1) / 12) * 100;
+    bar.style.left = leftPct + '%';
+    bar.style.width = widthPct + '%';
+  };
+
+  const onUp = async () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    bar.classList.remove('dragging');
+    // Save to Firestore
+    const cur = S.roadmapTimelines[pid];
+    try {
+      await updateDoc(doc(db,'projects',pid), {
+        roadmapStart: cur.startMonth,
+        roadmapEnd: cur.endMonth
+      });
+    } catch(err) { console.error('Roadmap save error:', err); }
+  };
+
+  bar.classList.add('dragging');
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+// ── INBOX ──
+function renderInbox() {
+  const mine = S.tasks.filter(t => t.assigneeId===S.user?.uid && t.phase!=='Done');
+  document.getElementById('inboxBody').innerHTML = mine.length ? mine.map(t =>
+    `<tr onclick="openTaskDetail('${t.id}')">
+      <td style="font-size:10px;color:var(--text3);font-family:var(--mono)">${t.id.slice(-6).toUpperCase()}</td>
+      <td style="font-size:13px">${t.title}</td>
+      <td style="font-size:12px;color:var(--text2)">${t.projectName||''}</td>
+      <td><span class="pbadge ${PRIORITY_CLASS[t.priority]||'p-medium'}">${t.priority}</span></td>
+      <td><span style="font-size:11px;color:${PHASES.find(p=>p.id===t.phase)?.color||'var(--text3)'}">${t.phase}</span></td>
+    </tr>`
+  ).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:2rem">No open tickets assigned to you</td></tr>';
+  const badge = document.getElementById('myTasksBadge');
+  badge.textContent = mine.length;
+  badge.style.display = mine.length ? 'inline-block' : 'none';
+}
+
+// ── MEMBERS ──
+function renderMembers() {
+  document.getElementById('membersList').innerHTML = S.members.length ? S.members.map(u => {
+    const initials = getInitials(u.name||u.email||'?');
+    const color = COLORS[Math.abs(hashStr(u.uid||''))%COLORS.length];
+    const isMe = u.uid===S.user?.uid;
+    return `<div class="member-row">
+      <div class="av" style="background:${color}22;color:${color}">${initials}</div>
+      <div><div class="settings-label">${u.name}${isMe?' (You)':''}</div><div class="settings-desc">${u.email}</div></div>
+      <span class="role-badge ${isMe?'role-admin':'role-member'}">${isMe?'Admin':'Member'}</span>
+    </div>`;
+  }).join('') : '<div class="empty-state"><i class="ti ti-users"></i>No members yet</div>';
+}
+
+// ── NOTIFICATIONS ──
+async function addNotification(text) {
+  await addDoc(collection(db,'notifications'), {
+    userId: S.user.uid, text, read:false, createdAt: serverTimestamp()
+  });
+}
+function renderNotifs() {
+  document.getElementById('notifList').innerHTML = S.notifications.slice(0,10).map(n =>
+    `<div class="notif-item${n.read?'':' unread'}" onclick="markNotifRead('${n.id}')">
+      ${!n.read?'<div class="notif-dot" style="margin-top:5px;flex-shrink:0"></div>':'<div style="width:6px"></div>'}
+      <div><div class="notif-text">${n.text}</div><div class="notif-time">${formatTime(n.createdAt)}</div></div>
+    </div>`
+  ).join('')||'<div style="padding:1rem;font-size:12px;color:var(--text3);text-align:center">No notifications</div>';
+  const unread = S.notifications.filter(n=>!n.read).length;
+  const badge = document.getElementById('notifBadge');
+  badge.textContent = unread;
+  badge.style.display = unread ? 'flex' : 'none';
+}
+window.markNotifRead = async id => { await updateDoc(doc(db,'notifications',id), {read:true}); };
+window.clearNotifs = async () => {
+  for (const n of S.notifications.filter(n=>!n.read)) await updateDoc(doc(db,'notifications',n.id), {read:true});
+  document.getElementById('notifPanel').classList.remove('open');
+};
+
+// ── AI PANEL ──
+let aiHistory = [];
+window.toggleAI = () => {
+  const p = document.getElementById('aiPanel');
+  const open = p.classList.toggle('open');
+  if (open && aiHistory.length===0) {
+    aiHistory = [{role:'assistant',content:`👋 Hi! I'm Orbit AI — your project intelligence layer.\n\nI can help you:\n· Break down tasks into sub-tasks\n· Generate course outlines and syllabi\n· Draft automation workflow specs\n· Summarise comment threads\n· Prioritise your backlog\n· Write acceptance criteria\n\nWhat are you working on?`}];
+    renderAIMsgs();
+    const chips = ['Generate course outline','Prioritise my backlog','Draft automation spec','Write acceptance criteria'];
+    document.getElementById('aiMessages').lastChild.insertAdjacentHTML('beforeend',
+      `<div class="ai-chips">${chips.map(c=>`<div class="ai-chip" onclick="sendChip('${c}')">${c}</div>`).join('')}</div>`);
+  }
+};
+window.sendChip = t => { document.getElementById('aiInput').value=t; sendAI(); };
+window.aiKeyDown = e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();} };
+
+function renderAIMsgs() {
+  const c = document.getElementById('aiMessages');
+  c.innerHTML = aiHistory.map(m=>`<div class="aimsg ${m.role}">${m.content.replace(/\n/g,'<br>')}</div>`).join('');
+  c.scrollTop = c.scrollHeight;
+}
+
+window.sendAI = async () => {
+  const inp = document.getElementById('aiInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  aiHistory.push({role:'user',content:text});
+  renderAIMsgs();
+  document.getElementById('aiMessages').insertAdjacentHTML('beforeend','<div class="typing" id="aiTyping"><span></span><span></span><span></span></div>');
+  document.getElementById('aiMessages').scrollTop = 99999;
+  const proj = S.projects.find(p=>p.id===S.currentProject);
+  const system = `You are Orbit AI, an intelligent project management assistant for an AI engineer specialist who creates AI automation systems and designs AI-integrated courses for professional audiences. The user is based in South Africa. Current project: ${proj?.name||'None'} (${proj?.type||'N/A'}). Open tickets: ${S.tasks.filter(t=>t.projectId===S.currentProject&&t.phase!=='Done').length}. Be concise (under 200 words unless generating structured content), practical, and professional.`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages:aiHistory})
+    });
+    const d = await r.json();
+    const reply = d.content?.map(b=>b.text||'').join('')||"I couldn't generate a response.";
+    document.getElementById('aiTyping')?.remove();
+    aiHistory.push({role:'assistant',content:reply});
+    renderAIMsgs();
+  } catch(e) {
+    document.getElementById('aiTyping')?.remove();
+    aiHistory.push({role:'assistant',content:getFallback(text)});
+    renderAIMsgs();
+  }
+};
+
+function getFallback(text) {
+  const t = text.toLowerCase();
+  if (t.includes('course')||t.includes('outline')||t.includes('syllabus'))
+    return "Course outline:\nModule 1: Foundations of AI in [domain]\nModule 2: Practical AI tools\nModule 3: AI-assisted analysis\nModule 4: Ethics & responsible AI\nModule 5: Capstone — real-world integration\n\nWant me to expand any module?";
+  if (t.includes('automat'))
+    return "Automation workflow:\n1. Document the manual process\n2. Identify AI trigger points\n3. Build prototype with real data\n4. Test edge cases\n5. Deploy with human review initially";
+  if (t.includes('priorit'))
+    return "Prioritisation:\n· Critical blockers → this sprint\n· High-value, low-effort → next sprint\n· High-value, high-effort → break down\n· Low-value → defer or delete";
+  return "I can help with course design, automation specs, task breakdown, and sprint planning. What are you working on?";
+}
+
+// ── NAV ──
+window.navigateTo = (view, navEl) => {
+  if (navEl) { document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active')); navEl.classList.add('active'); }
+  const map = {dashboard:'dashboardView',inbox:'inboxView',roadmap:'roadmapView',members:'membersView',settings:'settingsView'};
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  if (map[view]) document.getElementById(map[view]).classList.add('active');
+  const titles = {dashboard:'Dashboard',inbox:'My Tasks',roadmap:'Roadmap',members:'Team Members',settings:'Settings'};
+  document.getElementById('topbarTitle').textContent = titles[view]||view;
+  if (view==='inbox') renderInbox();
+  if (view==='roadmap') { loadRoadmapTimelines().then(()=>renderRoadmap()); }
+};
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+window.showModal = id => document.getElementById(id).classList.remove('hidden');
+window.hideModal = id => document.getElementById(id).classList.add('hidden');
+window.toggleNotif = () => document.getElementById('notifPanel').classList.toggle('open');
+
+window.showToast = (msg, isError=false) => {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').className = `ti ${isError?'ti-alert-circle':'ti-check'} toast-icon`;
+  t.className = `toast ${isError?'error':''} show`;
+  setTimeout(()=>t.classList.remove('show'), 2800);
+};
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  return parts.length>=2 ? (parts[0][0]+parts[parts.length-1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+}
+function hashStr(str) {
+  let h=0; for(let i=0;i<str.length;i++) h=(Math.imul(31,h)+str.charCodeAt(i))|0; return h;
+}
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  if (isNaN(d)) return '';
+  const diff = Date.now()-d.getTime();
+  if (diff<60000) return 'Just now';
+  if (diff<3600000) return Math.floor(diff/60000)+'m ago';
+  if (diff<86400000) return Math.floor(diff/3600000)+'h ago';
+  return d.toLocaleDateString('en-ZA',{day:'numeric',month:'short'});
+}
+
+// ── THEME TOGGLE ──
+window.toggleTheme = () => {
+  const isLight = document.documentElement.classList.toggle('light');
+  document.getElementById('themeIcon').className = isLight ? 'ti ti-moon' : 'ti ti-sun';
+  localStorage.setItem('orbitai-theme', isLight ? 'light' : 'dark');
+};
+(function(){
+  const saved = localStorage.getItem('orbitai-theme');
+  if (saved === 'light') {
+    document.documentElement.classList.add('light');
+    const icon = document.getElementById('themeIcon');
+    if (icon) icon.className = 'ti ti-moon';
+  }
+})();
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notifPanel')&&!e.target.closest('.topbar-actions'))
+    document.getElementById('notifPanel').classList.remove('open');
+});
+</script>
+</body>
+</html>
